@@ -1,5 +1,20 @@
 #include "pch.h"
 constexpr auto VERSION = "Beta v1.0";
+
+int printWelcomePanel(string _str, int row, int col)
+{
+    ifstream myTextFile;
+    myTextFile.open(_str);
+    if (!myTextFile.is_open())
+        return 1; 
+    move(row / 2, col / 2);
+    printw("Hello");
+	refresh();
+	getch(); // TODO time
+    myTextFile.close();
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
 	initscr();
