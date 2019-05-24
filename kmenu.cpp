@@ -7,6 +7,7 @@ using namespace std;
 constexpr auto _VERSION = "Beta v1.0";
 constexpr unsigned int _SEC = 1;
 
+
 bool razmer()
 {
 	int col, row;
