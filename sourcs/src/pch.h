@@ -17,6 +17,7 @@
 	#include <string>
 	#include <unistd.h>
 	#include <cmath>
+	#include <string_view>
 
 	bool razmer();
 	int printWelcomePanel(std::string _str, int row, int col);
