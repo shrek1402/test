@@ -1,26 +1,28 @@
-#include "kmenu.h"
-#include "stdfix.h"
-#include <ctime>
-#include <vector>
-#include <string>
+#include "pch.h"
+
 using namespace std;
 constexpr auto _VERSION = "Beta v1.0";
-constexpr unsigned int _SEC = 1;
+constexpr unsigned int _SEC = 10;
 
-
-bool razmer()
+int printWelcomePanel(string _str, int row, int col)
 {
-	int col, row;
-	getmaxyx(stdscr, row, col);
-	if (row <  10) throw "Uvelich visotu okna";
-	if (col < 40) throw "Uvelich shirinu okna";
-	return true;
+    ifstream myTextFile;
+    myTextFile.open(_str);
+    if (!myTextFile.is_open())
+        return 1; 
+	
+    move(row / 2, col / 2);
+    printw("Hello");
+	refresh();
+	getch(); // TODO time
+    myTextFile.close();
+    return 0;
 }
-
+//
 long long unsigned int printMenu(std::vector <std::string>& _vec)
 {
-	long long unsigned int c = 1;
-	int temp;
+	long long unsigned int swtch = 1;
+	int key;
 	int col, row;
 	getmaxyx(stdscr, row, col);
 	
@@ -28,7 +30,7 @@ long long unsigned int printMenu(std::vector <std::string>& _vec)
 		for(long long unsigned int i = 0; i < _vec.size(); i++){
 			move(row/2 + i, col/2 - 9);
 			
-			if (i == c){
+			if (i == swtch){
 				for (long long unsigned int j=0; j< _vec[i].length(); j++)
 				addch(_vec[i][j] | A_BLINK);
 			}
@@ -37,24 +39,24 @@ long long unsigned int printMenu(std::vector <std::string>& _vec)
 			}
 		}
 		
-		if ((temp = getch()) == KEY_UP){
-				if (c != 1)
-					c--;
+		if ((key = getch()) == KEY_UP){
+				if (swtch != 1)
+					swtch--;
 				else
-					c = 4;
+					swtch = 4;
 		}
-		else if (temp == KEY_DOWN){
-			if (c != 4)
-				c++;
+		else if (key == KEY_DOWN){
+			if (swtch != 4)
+				swtch++;
 			else
-				c = 1;
+				swtch = 1;
 		}
 		refresh();
-	}while(temp != '\n');
+	}while(key != '\n');
 	
-	return c;
+	return swtch;
 }
-
+//
 int mainMenu(int row, int col)
 {
     erase();
@@ -62,7 +64,7 @@ int mainMenu(int row, int col)
 	std::vector <std::string> mStr = {
 		"    Menu",
 		"1. Speed mode",
-		"2. Time mode",
+		"2. typing tutor",
 		"3. Blind seal mode",
 		"4. Exit"
 	};
@@ -72,7 +74,7 @@ int mainMenu(int row, int col)
 	
 	return printMenu(mStr);
 }
-
+//
 int printRamka(int _row, int _col)
 {
 	curs_set(0);
@@ -89,11 +91,12 @@ int printRamka(int _row, int _col)
     return 0;
 }
 
+//
 int slozhnost(int row, int col)
 {
 	erase();
     printRamka(row, col);
-	vector <std::string> mStr = {
+	std::vector <std::string> mStr = {
 		"  Slozhn", // TODO eng
 		"1. Eazy",
 		"2. Normal",
@@ -102,9 +105,18 @@ int slozhnost(int row, int col)
 	};
 
 	noecho();
-	keypad(stdscr, TRUE);
-	
 	return printMenu(mStr);
+}
+double reaction(int _SEC, int result)
+{
+	double reaction;
+		if (!result){
+			reaction = 0;
+		}
+		else{
+			reaction = (double)_SEC/result;
+		}
+	return reaction;
 }
 
 void resultTabl(int result, int popitki)
@@ -128,24 +140,17 @@ void resultTabl(int result, int popitki)
 			sm = 6:
 			sm = 7;
 			
-		move(yy + 1, xx+xSize/2 - sm);
-		printw("Tvoy resul'tat");
-			
 		WINDOW *win = newwin(ySize, xSize, yy, xx);
-		move(yy + 4, xx+xSize/2 - sm);
+		move(yy + 2, xx+xSize/2 - sm);
 		printw("Result: %d", result);
-		move(yy + 6, xx+xSize/2 -sm); 
+		move(yy + 3, xx+xSize/2 -sm);
 				// TODO add: time, % ...
 		result > 0? 
 			printw("MOLODEC! :)"):
 			printw("NE MOLODEC! :(");
-		
-		move(yy + 5, xx+xSize/2 -sm);
-		double a = 0;
-		if (result)
-			a = _SEC*1.0/result;
-		
-		printw("Reaction: %.2f", a);
+			
+		move(yy + 4, xx+xSize/2 -sm);
+			printw("Reaction: %.2f", reaction(_SEC, result));
 			
 		box(win,0,0);
 		wrefresh(win);
@@ -155,28 +160,25 @@ void resultTabl(int result, int popitki)
 void speedNormal(string _dataFile, int row, int col)
 {
 	std::ifstream dataFile(_dataFile);
-	if(!dataFile)
-		throw "File not open";
+	std::vector <std::string> vec;
 	
-	  long long unsigned int	i = 0;
-	std::vector<std::string> 	vec;
-				 std::string	tempA;
-				unsigned int	result = 0,
-								startTime = clock();
-								endTime = startTime;				
-						bool	flag = 1;
-						 int	ch,
-								temp,
-								x,y, x_temp,
-								popitki = 0;
-							
 	while(!dataFile.eof()){
 		std::string temp;
 		std::getline(dataFile, temp);
 		vec.push_back(temp);
 	}
-					
+	
+	unsigned int result = 0;
+	unsigned int startTime = clock();
+	unsigned int endTime = startTime;
 	nodelay(stdscr, TRUE);
+	int ch;
+	int temp;
+	long long unsigned int i =0;
+	std::string tempA;
+	bool flag = 1;
+	int x,y, x_temp;
+	int popitki = 0;
 	do{
 		if ((ch = getch()) == ERR){
 			if (flag){
@@ -244,23 +246,24 @@ void speedNormal(string _dataFile, int row, int col)
 void speedEz()
 {
 	int row,col;
-	unsigned int result = 0,
-				 startTime = clock(),
-				 endTime = startTime;
-		
-	int	ch,
-		temp,
-		x,y,
-		popitki = 0;
-	char tempA;
-	bool flag = 1;
 	getmaxyx(stdscr, row, col);
+	unsigned int result = 0;
+	unsigned int startTime = clock();
+	unsigned int endTime = startTime;
+		
 	nodelay(stdscr, TRUE);
+	int ch;
+	int temp;
+	bool flag = 1;
+	int x,y;
+	int popitki = 0;
+	char tempA;
+	
 	do{
 		if ((ch = getch()) == ERR){
 			if (flag){
 				tempA = rand() % 26 + 0x61;
-				x = (rand() % (col-1)) ;
+				x = (rand() % (col-1)+1) ;
 				y = (rand() % (row-5)) + 4;
 				erase();
 				printRamka(row, col);
@@ -315,8 +318,8 @@ void speedMode(int slozh, int row, int col)
 		}
 			
 		case 3:{
-			speedNormal("Pred.txt", row, col);
-			break;
+				speedNormal("Pred.txt", row, col);
+				break;
 		}
 		case 4:
 			break;
