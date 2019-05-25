@@ -1,6 +1,4 @@
-dist:     xenial
-sudo:     required
-
+image: gcc
 language: cpp
 cache: cargo
 
